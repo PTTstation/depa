@@ -1,8 +1,10 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
+import cv2  # Import OpenCV for video processing
 import matplotlib.pyplot as plt
 import tempfile
+import os
 
 # ฟังก์ชันสำหรับคำนวณ NDVI
 def calculate_ndvi(image):
@@ -19,21 +21,61 @@ def display_ndvi(ndvi):
     plt.title('NDVI')
     st.pyplot(plt.gcf())  # ใช้ st.pyplot เพื่อแสดงภาพใน Streamlit
 
-def main():
-    st.title('NDVI Image Converter')
+# ฟังก์ชันสำหรับการประมวลผลวิดีโอ
+def process_video(video_path):
+    stframe = st.empty()  # สร้างพื้นที่สำหรับแสดงผลวิดีโอ
+    cap = cv2.VideoCapture(video_path)
     
-    # อัปโหลดภาพ
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png",'mp4','mpeg','mov'])
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        # แปลงภาพจาก BGR เป็น RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_pil = Image.fromarray(frame_rgb)
+        
+        # คำนวณ NDVI
+        ndvi_frame = calculate_ndvi(frame_pil)
+        
+        # แสดงผล NDVI
+        fig, ax = plt.subplots()
+        ax.imshow(ndvi_frame, cmap='RdYlGn')
+        ax.set_title("NDVI Frame")
+        stframe.pyplot(fig)
+        
+        # หยุดชั่วคราวเล็กน้อยเพื่อให้แสดงผลลัพธ์เป็นวิดีโอ
+        cv2.waitKey(1)
+    
+    cap.release()
+
+def main():
+    st.title('NDVI Image/Video Converter')
+    
+    # อัปโหลดภาพหรือวิดีโอ
+    uploaded_file = st.file_uploader("Choose an image or video...", type=["jpg", "jpeg", "png", "mp4", "mpeg", "mov"])
     
     if uploaded_file is not None:
-        # เปิดไฟล์ภาพ
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
+        file_type = uploaded_file.type.split('/')[0]
         
-        # คำนวณ NDVI และแสดงผลลัพธ์
-        st.write("Calculating NDVI...")
-        ndvi_image = calculate_ndvi(image)
-        display_ndvi(ndvi_image)
+        if file_type == 'image':
+            # เปิดไฟล์ภาพ
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Uploaded Image.', use_column_width=True)
+            
+            # คำนวณ NDVI และแสดงผลลัพธ์
+            st.write("Calculating NDVI...")
+            ndvi_image = calculate_ndvi(image)
+            display_ndvi(ndvi_image)
+        
+        elif file_type == 'video':
+            # บันทึกไฟล์วิดีโอที่อัปโหลดลงในไฟล์ชั่วคราว
+            tfile = tempfile.NamedTemporaryFile(delete=False)
+            tfile.write(uploaded_file.read())
+            
+            # ประมวลผลวิดีโอและแสดงผล NDVI สำหรับแต่ละเฟรม
+            st.write("Processing video and calculating NDVI for each frame...")
+            process_video(tfile.name)
 
 if __name__ == "__main__":
     main()
