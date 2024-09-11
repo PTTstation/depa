@@ -44,9 +44,8 @@ def process_video(video_path):
         ax.set_title("NDVI Frame")
         stframe.pyplot(fig)
         
-        # หยุดชั่วคราวเล็กน้อยเพื่อให้แสดงผลลัพธ์เป็นวิดีโอ
-        cv2.waitKey(1)
-    
+        # ลบการใช้ cv2.waitKey() เนื่องจาก Streamlit จัดการการแสดงผลอยู่แล้ว
+
     cap.release()
 
 def main():
