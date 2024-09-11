@@ -21,9 +21,8 @@ def display_ndvi(ndvi):
     plt.title('NDVI')
     st.pyplot(plt.gcf())  # ใช้ st.pyplot เพื่อแสดงภาพใน Streamlit
 
-# ฟังก์ชันสำหรับการประมวลผลวิดีโอ
+# ฟังก์ชันสำหรับการประมวลผลวิดีโอและแสดงเฟรม
 def process_video(video_path):
-    stframe = st.empty()  # สร้างพื้นที่สำหรับแสดงผลวิดีโอ
     cap = cv2.VideoCapture(video_path)
     
     while cap.isOpened():
@@ -42,10 +41,10 @@ def process_video(video_path):
         fig, ax = plt.subplots()
         ax.imshow(ndvi_frame, cmap='RdYlGn')
         ax.set_title("NDVI Frame")
-        stframe.pyplot(fig)
         
-        # ลบการใช้ cv2.waitKey() เนื่องจาก Streamlit จัดการการแสดงผลอยู่แล้ว
-
+        # แสดงเฟรมแต่ละอันเรียงกันลงมา
+        st.pyplot(fig)
+        
     cap.release()
 
 def main():
